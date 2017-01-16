@@ -18,3 +18,7 @@ Create a file "config.json" in the same directory as the executable with the fol
 ## Running
 
 Run `go build` then `sudo ./quiet-dog`
+
+## Acknowledgements
+
+ARP scanning implementation adapted from [gopacket's ARP example](https://github.com/google/gopacket/blob/master/examples/arpscan/arpscan.go)
