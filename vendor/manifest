@@ -1,0 +1,22 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/google/gopacket",
+			"repository": "https://github.com/google/gopacket",
+			"vcs": "git",
+			"revision": "705830d9f1fe29ce9c730f09f270c4647b13d9a2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/unix",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"branch": "master",
+			"path": "/unix",
+			"notests": true
+		}
+	]
+}
