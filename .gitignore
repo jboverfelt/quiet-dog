@@ -2,3 +2,4 @@
 *.swp
 quiet-dog
 config.json
+lock.json

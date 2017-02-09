@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "github.com/google/gopacket": {
+            "version": "v1.1.12"
+        }
+    }
+}

@@ -39,12 +39,6 @@ import "C"
 var pageSize = int(C.getpagesize())
 var tpacketAlignment = uint(C.TPACKET_ALIGNMENT)
 
-// ErrPoll returned by poll
-var ErrPoll = errors.New("packet poll failed")
-
-// ErrTimeout returned on poll timeout
-var ErrTimeout = errors.New("packet poll timeout expired")
-
 func tpacketAlign(v int) int {
 	return int((uint(v) + tpacketAlignment - 1) & ((^tpacketAlignment) - 1))
 }
@@ -247,7 +241,6 @@ func (h *TPacket) releaseCurrentPacket() error {
 //  data2, _, _ := tp.ZeroCopyReadPacketData()  // invalidates bytes in data1
 func (h *TPacket) ZeroCopyReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	h.mu.Lock()
-retry:
 	if h.current == nil || !h.current.next() {
 		if h.shouldReleasePacket {
 			h.releaseCurrentPacket()
@@ -256,10 +249,6 @@ retry:
 		if err = h.pollForFirstPacket(h.current); err != nil {
 			h.mu.Unlock()
 			return
-		}
-		// We can recieved empty block
-		if h.current.getLength() == 0 {
-			goto retry
 		}
 	}
 	data = h.current.getData()
@@ -395,19 +384,14 @@ func (h *TPacket) getTPacketHeader() header {
 }
 
 func (h *TPacket) pollForFirstPacket(hdr header) error {
-	tm := C.int(h.opts.pollTimeout / time.Millisecond)
 	for hdr.getStatus()&C.TP_STATUS_USER == 0 {
 		h.pollset.fd = h.fd
 		h.pollset.events = C.POLLIN
 		h.pollset.revents = 0
-		n, err := C.poll(&h.pollset, 1, tm)
-		if n == 0 {
-			return ErrTimeout
-		}
-
+		_, err := C.poll(&h.pollset, 1, -1)
 		h.stats.Polls++
 		if h.pollset.revents&C.POLLERR > 0 {
-			return ErrPoll
+			return errors.New("poll error condition")
 		}
 		if err != nil {
 			return err
