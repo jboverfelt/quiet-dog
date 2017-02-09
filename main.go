@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 
+	"strings"
+
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -17,17 +19,17 @@ type config struct {
 	Mac          string        `json:"mac"`
 	Interface    string        `json:"interface"`
 	PhoneNumbers []phoneNumber `json:"phoneNumbers"`
+	TwilioNumber phoneNumber   `json:"twilioNumber"`
 	TwilioSid    string        `json:"twilioSid"`
 	TwilioToken  string        `json:"twilioToken"`
 }
 
-type smsSender interface {
-	SendSMS(to phoneNumber, from phoneNumber, body string) error
-}
+const baseURL = "https://api.twilio.com/2010-04-01/Accounts/"
 
 func main() {
 	// read into config struct
 	cfgFile, err := os.Open("config.json")
+	defer cfgFile.Close()
 
 	if err != nil {
 		log.Fatalf("Could not open config.json file: %v", err)
@@ -46,10 +48,16 @@ func main() {
 		log.Fatalf("error on packet source setup: %v", err)
 	}
 
-	listenAndSendSMS(packets, cfg.Mac)
+	sender := twilioSmsSender{
+		baseURL: baseURL,
+		sid:     cfg.TwilioSid,
+		token:   cfg.TwilioToken,
+	}
+
+	listenAndSendSMS(packets, cfg, sender)
 }
 
-func listenAndSendSMS(packets <-chan gopacket.Packet, mac string) {
+func listenAndSendSMS(packets <-chan gopacket.Packet, cfg config, sender smsSender) {
 	var packet gopacket.Packet
 	for {
 		// block until a packet is received
@@ -63,12 +71,17 @@ func listenAndSendSMS(packets <-chan gopacket.Packet, mac string) {
 		arp := arpLayer.(*layers.ARP)
 
 		// discard the packet unless it comes from the dash button
-		if net.HardwareAddr(arp.SourceHwAddress).String() != mac {
+		if net.HardwareAddr(arp.SourceHwAddress).String() != cfg.Mac {
 			continue
 		}
 
-		// send SMS - we got an arp from the button (stubbed for now)
-		log.Printf("Got a button click!")
+		log.Println("ring! sending sms")
+
+		err := sender.SendSMS(cfg.PhoneNumbers, cfg.TwilioNumber, strings.NewReader("Someone is at the door!"))
+
+		if err != nil {
+			log.Printf("Error: %v", err)
+		}
 	}
 }
 

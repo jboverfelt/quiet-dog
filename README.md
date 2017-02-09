@@ -11,6 +11,7 @@ Create a file "config.json" in the same directory as the executable with the fol
     "mac": "The MAC address of your dash button",
     "twilioSid": "The Twilio Account SID for sending texts",
     "twilioToken": "The Twilio auth token for sending texts",
+    "twilioNumber": "The Twilio phone number that is activated as part of the setup",
     "phoneNumbers": ['phone numbers', 'to text when people are here'],
     "interface": "The network interface to listen for ARP packets on (probably wlan0 or similar)"
 }
